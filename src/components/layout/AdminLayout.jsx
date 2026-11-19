@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   Store,
   Package,
-  History,
   Settings,
   LogOut,
   Menu,
@@ -14,7 +13,9 @@ import {
   Building2,
   Boxes,
   AlertTriangle,
-  PackageX
+  PackageX,
+  History,
+  Bell
 } from 'lucide-react'
 
 import { useState } from 'react'
@@ -28,11 +29,12 @@ function AdminLayout({ children }) {
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'Shops', path: '/admin/shops', icon: Store },
     { name: 'All Products', path: '/admin/products', icon: Package },
-    { name: 'Stock History', path: '/admin/history', icon: History },
     { name: 'Settings', path: '/admin/settings', icon: Settings },
     { name: 'Shop Products', path: '/admin/shop-products', icon: Boxes},
     { name: 'Low Stock', path: '/admin/low-stock', icon: AlertTriangle},
     { name: 'Out of Stock', path: '/admin/out-of-stock', icon: PackageX},
+    { name: 'Stock History', path: '/admin/history', icon: History},
+    { name: 'Notifications', path: '/admin/notifications', icon: Bell}
   ]
 
   const handleLogout = async () => {

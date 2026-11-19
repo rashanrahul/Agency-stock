@@ -6,7 +6,10 @@ import {
   RefreshCw,
   Store,
   AlertTriangle,
-  PackageX
+  PackageX,
+  Pencil,
+  X,
+  Save
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -17,6 +20,10 @@ function ShopProducts() {
   const [search, setSearch] = useState('')
   const [selectedShop, setSelectedShop] = useState('all')
   const [error, setError] = useState('')
+  const [editingItem, setEditingItem] = useState(null)
+const [newQuantity, setNewQuantity] = useState('')
+const [saving, setSaving] = useState(false)
+const [editError, setEditError] = useState('')
 
   const fetchData = async () => {
     setLoading(true)
@@ -64,6 +71,46 @@ function ShopProducts() {
 
     setLoading(false)
   }
+
+  const handleEditStock = (item) => {
+  setEditingItem(item)
+  setNewQuantity(String(item.stock_quantity))
+  setEditError('')
+}
+
+const handleSaveStock = async (e) => {
+  e.preventDefault()
+
+  const quantity = Number(newQuantity)
+
+  if (newQuantity.trim() === '' || !Number.isFinite(quantity) || quantity < 0) {
+    setEditError('Please enter a valid stock quantity.')
+    return
+  }
+
+  setSaving(true)
+  setEditError('')
+
+  const { data: result, error } = await supabase.rpc(
+    'admin_update_shop_stock',
+    {
+      p_shop_product_id: editingItem.id,
+      p_new_quantity: quantity
+    }
+  )
+
+  if (error) {
+    setEditError(error.message)
+    setSaving(false)
+    return
+  }
+
+  setEditingItem(null)
+  setNewQuantity('')
+  setSaving(false)
+
+  await fetchData()
+}
 
   useEffect(() => {
     fetchData()
@@ -256,6 +303,7 @@ function ShopProducts() {
                   <th className="py-3 px-3">Stock</th>
                   <th className="py-3 px-3">Threshold</th>
                   <th className="py-3 px-3">Status</th>
+                  <th className="py-3 px-3">Action</th>
                 </tr>
               </thead>
 
@@ -290,6 +338,18 @@ function ShopProducts() {
                           {status.label}
                         </span>
                       </td>
+
+                      <td className="py-4 px-3">
+  <button
+    onClick={() => handleEditStock(item)}
+    className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100"
+  >
+    <Pencil size={15} />
+    Edit Stock
+  </button>
+</td>
+
+
                     </tr>
                   )
                 })}
@@ -299,6 +359,95 @@ function ShopProducts() {
         )}
 
       </div>
+
+
+{editingItem && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800">
+            Edit Stock Quantity
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            {editingItem.products?.product_name}
+          </p>
+          <p className="text-xs text-slate-400">
+            {editingItem.shops?.shop_name}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            setEditingItem(null)
+            setEditError('')
+          }}
+          className="rounded-lg p-2 hover:bg-slate-100"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      <form onSubmit={handleSaveStock} className="space-y-4">
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            New Stock Quantity
+          </label>
+
+          <input
+            type="number"
+            min="0"
+            step="any"
+            value={newQuantity}
+            onChange={(e) => setNewQuantity(e.target.value)}
+            className="w-full rounded-lg border px-4 py-3 outline-none focus:border-blue-500"
+            required
+          />
+
+          <p className="mt-2 text-xs text-slate-500">
+            Current Stock: {editingItem.stock_quantity} {editingItem.products?.unit}
+          </p>
+        </div>
+
+        {editError && (
+          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            {editError}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => {
+              setEditingItem(null)
+              setEditError('')
+            }}
+            className="rounded-lg border px-4 py-2.5 hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            <Save size={17} />
+            {saving ? 'Saving...' : 'Update Stock'}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+)}
+
+
+
+
     </div>
   )
 }

@@ -27,11 +27,12 @@ const [assignLoading, setAssignLoading] = useState(false)
 const [assignError, setAssignError] = useState('')
 
   const emptyForm = {
-    product_name: '',
-    product_code: '',
-    description: '',
-    unit: ''
-  }
+  product_name: '',
+  product_code: '',
+  description: '',
+  unit: '',
+  low_stock_threshold: '10'
+}
 
   const [form, setForm] = useState(emptyForm)
 
@@ -82,11 +83,12 @@ const [assignError, setAssignError] = useState('')
     setEditingProduct(product)
 
     setForm({
-      product_name: product.product_name || '',
-      product_code: product.product_code || '',
-      description: product.description || '',
-      unit: product.unit || ''
-    })
+  product_name: product.product_name || '',
+  product_code: product.product_code || '',
+  description: product.description || '',
+  unit: product.unit || '',
+  low_stock_threshold: String(product.low_stock_threshold ?? 10)
+})
 
     setError('')
     setShowForm(true)
@@ -105,14 +107,26 @@ const [assignError, setAssignError] = useState('')
       return
     }
 
+    const threshold = Number(form.low_stock_threshold)
+
+if (
+  form.low_stock_threshold.trim() === '' ||
+  !Number.isFinite(threshold) ||
+  threshold < 0
+) {
+  setError('Please enter a valid low stock limit.')
+  return
+}
+
     setSaving(true)
 
     const productData = {
-      product_name: form.product_name.trim(),
-      product_code: form.product_code.trim(),
-      description: form.description.trim(),
-      unit: form.unit.trim()
-    }
+  product_name: form.product_name.trim(),
+  product_code: form.product_code.trim(),
+  description: form.description.trim(),
+  unit: form.unit.trim(),
+  low_stock_threshold: Number(form.low_stock_threshold)
+}
 
     let result
 
@@ -168,7 +182,7 @@ const [assignError, setAssignError] = useState('')
     shop_id: shopId,
     product_id: assigningProduct.id,
     stock_quantity: 0,
-    low_stock_threshold: 10
+    low_stock_threshold: assigningProduct.low_stock_threshold ?? 10
   }))
 
   const { error } = await supabase
@@ -456,6 +470,28 @@ const [assignError, setAssignError] = useState('')
                   placeholder="Product description"
                 />
               </div>
+
+              <div>
+  <label className="block text-sm font-medium mb-1">
+    Low Stock Limit *
+  </label>
+
+  <input
+    type="number"
+    name="low_stock_threshold"
+    value={form.low_stock_threshold}
+    onChange={handleChange}
+    min="0"
+    step="0.01"
+    required
+    className="w-full border rounded-lg px-3 py-2.5"
+    placeholder="Example: 10"
+  />
+
+  <p className="text-xs text-slate-500 mt-1">
+    Low stock notification will be triggered at this quantity.
+  </p>
+</div>
 
               <button
                 type="submit"
